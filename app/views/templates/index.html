@@ -21,7 +21,7 @@
             margin: 0;
             font-size: 2rem;
         }
-        video {
+        img {
             max-width: 100%;
             height: auto;
             margin: 20px 0;
@@ -43,6 +43,19 @@
         .controls button:hover {
             background-color: #0056b3;
         }
+        #status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -58,6 +71,7 @@
             <button onclick="pauseVideo()">Pause</button>
             <button onclick="generateReport()">Generate Report</button>
         </div>
+        <div id="status" style="display: none;"></div>
     </main>
 
     <script>
@@ -70,23 +84,28 @@
         }
 
         async function generateReport() {
-            const trueLabels = [0, 1, 2, 1];
-            const predictedLabels = [0, 1, 2, 0];
-
-            const response = await fetch('/generate_report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    true_labels: trueLabels,
-                    predicted_labels: predictedLabels
-                })
-            });
-
-            if (response.ok) {
-                alert('Report generated successfully!');
-            } else {
-                const error = await response.json();
-                alert(`Failed to generate report: ${error.error || 'Unknown error'}`);
+            const statusDiv = document.getElementById('status');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = 'Generating report...';
+            
+            try {
+                const response = await fetch('/generate_report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.className = 'success';
+                    statusDiv.innerHTML = `${data.message}<br><a href="${data.pdf_url}" target="_blank">Ver reporte PDF</a>`;
+                } else {
+                    statusDiv.className = 'error';
+                    statusDiv.innerHTML = `Error: ${data.error || 'Unknown error'}`;
+                }
+            } catch (error) {
+                statusDiv.className = 'error';
+                statusDiv.innerHTML = `Error: ${error.message}`;
                 console.error(error);
             }
         }
